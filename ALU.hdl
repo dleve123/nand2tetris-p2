@@ -55,5 +55,15 @@ CHIP ALU {
         Mux16(a=xProcessedAndyProcessed, b=xProcessedPlusyProcessed, sel=f, out=fOut);
 
         Not16(in=fOut, out=notFOut);
-        Mux16(a=fOut, b=notFOut, sel=no, out=out);
+        Mux16(a=fOut, b=notFOut, sel=no, out=out, out[15]=msbOut, out[0..7]=leastHalfOut, out[8..15]=mostHalfOut);
+
+        // if out's most significant bit is 1, then it's negative
+        And(a=msbOut, b=true, out=ng);
+
+        // collapse down 16-bit out via 2 8-way Or buses
+        // if out isn't 0, then one of the Or8Way will be non-zero.
+        Or8Way(in=leastHalfOut, out=leastNotZero);
+        Or8Way(in=mostHalfOut, out=mostNotZero);
+        Or(a=leastNotZero, b=mostNotZero, out=outNotZero);
+        Not(in=outNotZero, out=zr);
 }
